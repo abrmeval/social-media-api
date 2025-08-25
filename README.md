@@ -230,13 +230,7 @@ This project provides a cloud-native backend for a social media application, fea
 - [GitHub Actions](https://docs.github.com/actions)
 - [Swagger](https://swagger.io/)
 - [GraphQL](https://graphql.org/)
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
-
+  
 ---
 
 ## License
