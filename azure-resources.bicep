@@ -1,5 +1,7 @@
 // Azure Resources for Social Media API Project
-// This Bicep file provisions Cosmos DB, Blob Storage, and a B1 App Service Plan for backend deployment.
+// This Bicep file provisions Cosmos DB, Blob Storage, and a Free App Service Plan for backend deployment.
+
+var randomId = toLower(substring(uniqueString(resourceGroup().id, deployment().name), 0, 5))
 
 @description('Name for the Cosmos DB account.')
 param cosmosDbAccountName string = 'socialmedia-cosmosdb'
@@ -8,7 +10,7 @@ param cosmosDbAccountName string = 'socialmedia-cosmosdb'
 param cosmosDbDatabaseName string = 'socialmedia-db'
 
 @description('Name for the Blob Storage account.')
-param storageAccountName string = 'socialmediastorage${uniqueString(resourceGroup().id)}'
+param storageAccountName string = 'socialmediastorage'
 
 @description('Location for resources.')
 param location string = resourceGroup().location
@@ -23,10 +25,13 @@ param cosmosDbSku string = 'Standard'
 param storageSku string = 'Standard_LRS'
 
 @description('SKU for App Service Plan.')
-param appServicePlanSku string = 'B1' // B1 is the Basic tier
+param appServicePlanSku string = 'F1' // F1 is the Free tier
+
+@description('Name for the Web App.')
+param webAppName string = 'socialmedia-webapp'
 
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
-  name: cosmosDbAccountName
+  name: '${cosmosDbAccountName}-${randomId}'
   location: location
   kind: 'GlobalDocumentDB'
   properties: {
@@ -119,7 +124,7 @@ resource cosmosDbLikes 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/conta
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: storageAccountName
+  name: '${storageAccountName}${randomId}'
   location: location
   sku: {
     name: storageSku
@@ -147,18 +152,38 @@ resource processedImagesContainer 'Microsoft.Storage/storageAccounts/blobService
 }
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
-  name: appServicePlanName
+  name: '${appServicePlanName}-${randomId}'
   location: location
   sku: {
-    name: appServicePlanSku // B1 Basic tier
-    tier: 'Basic'
+    name: appServicePlanSku // F1 Free tier
+    tier: 'Free'
+    capacity: 1
   }
+  kind: 'linux'
   properties: {
-    reserved: false
+    reserved: true // For Linux
+  }
+}
+
+resource webApp 'Microsoft.Web/sites@2022-03-01' = {
+  name: '${webAppName}-${randomId}'
+  location: location
+  properties: {
+    serverFarmId: appServicePlan.id
+    httpsOnly: true
+    siteConfig: {
+      linuxFxVersion: '.NET|8.0' // .NET 8.0 runtime
+    }
   }
 }
 
 // Add your App Services for .NET, Node.js, and Python as needed.
 
-output cosmosDbConnectionString string = cosmosDbAccount.properties.connectionStrings[0].connectionString
-output storageAccountConnectionString string = listKeys(storageAccount.id, storageAccount.apiVersion).keys[0].value
+output cosmosDbAccountName string = cosmosDbAccount.name
+output cosmosDbConnectionString string = 'AccountEndpoint=https://${cosmosDbAccount.name}.documents.azure.com:443/;AccountKey=${cosmosDbAccount.listKeys().primaryMasterKey};'
+output cosmosDbEndpoint string = cosmosDbAccount.properties.documentEndpoint
+output storageAccountName string = storageAccount.name
+output storageAccountConnectionString string = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
+output appServicePlanId string = appServicePlan.id
+output webAppName string = webApp.name
+output webAppUrl string = 'https://${webApp.properties.defaultHostName}'
