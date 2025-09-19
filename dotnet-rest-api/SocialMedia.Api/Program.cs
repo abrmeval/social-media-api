@@ -1,3 +1,6 @@
+using SocialMedia.Api.Interfaces;
+using SocialMedia.Api.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -19,6 +22,9 @@ builder.Services.AddControllers()
         options.ClientErrorMapping[StatusCodes.Status404NotFound].Link =
             "https://httpstatuses.com/404";
     });
+
+// Register CosmosDbService
+builder.Services.AddScoped<ICosmosDbService, CosmosDbService>();
 
 var app = builder.Build();
 

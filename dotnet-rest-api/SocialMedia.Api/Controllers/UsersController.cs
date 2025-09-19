@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
+using SocialMedia.Api.Interfaces;
 using SocialMedia.Api.Models;
-using System;
-using System.Collections.Generic;
 
 namespace SocialMedia.Api.Controllers
 {
@@ -9,70 +9,125 @@ namespace SocialMedia.Api.Controllers
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
     {
-        /// <summary>
-        /// Gets all users.
-        /// </summary>
-        /// <returns>List of users.</returns>
-        [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<User>), 200)]
-        public IActionResult GetAll()
+        private readonly ILogger<UsersController> _logger;
+        private readonly ICosmosDbService _cosmosDbService;
+
+        public UsersController(ILogger<UsersController> logger,
+         ICosmosDbService cosmosDbService)
         {
-            // TODO: Replace with DB fetch
-            var users = new List<User>
-            {
-                new User { Id = Guid.NewGuid(), Username = "john", Email = "john@example.com" }
-            };
-            return Ok(users);
+            _logger = logger;
+            _cosmosDbService = cosmosDbService;
         }
 
         /// <summary>
-        /// Gets a user by ID.
+        /// Retrieves all users in the system.
         /// </summary>
-        /// <param name="id">User's unique identifier.</param>
-        /// <returns>User details.</returns>
-        [HttpGet("{id}")]
-        [ProducesResponseType(typeof(User), 200)]
+        /// <remarks>
+        /// Returns a list of all registered users.
+        /// </remarks>
+        /// <response code="200">Returns the list of users</response>
+        /// <response code="404">If the users container is not found</response>
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<UserDto>), 200)]
         [ProducesResponseType(404)]
-        public IActionResult GetById(Guid id)
+        public IActionResult GetAll()
         {
-            // TODO: Replace with DB lookup
-            var user = new User { Id = id, Username = "john", Email = "john@example.com" };
+            var container = _cosmosDbService.GetContainer("users");
+
+            if (container == null)
+                return NotFound();
+
+            var users = container.GetItemLinqQueryable<UserDto>().ToList();
+
+            return Ok(users);
+        }
+
+    /// <summary>
+    /// Retrieves a user by their unique identifier.
+    /// </summary>
+    /// <param name="id">The user's unique identifier.</param>
+    /// <remarks>
+    /// Returns the user details if found.
+    /// </remarks>
+    /// <response code="200">Returns the user details</response>
+    /// <response code="404">If the user is not found or container is missing</response>
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(UserDto), 200)]
+        [ProducesResponseType(404)]
+        public IActionResult GetById(string id)
+        {
+            var container = _cosmosDbService.GetContainer("users");
+
+            if (container == null)
+                return NotFound();
+
+            var user = container.GetItemLinqQueryable<UserDto>().FirstOrDefault(u => u.Id == id);
             if (user == null)
                 return NotFound();
+
             return Ok(user);
         }
 
         /// <summary>
-        /// Creates a new user.
+        /// Creates a new user in the system.
         /// </summary>
-        /// <param name="user">User details.</param>
-        /// <returns>Created user.</returns>
+        /// <param name="user">The user details to create.</param>
+        /// <remarks>
+        /// Registers a new user and returns the created user object.
+        /// </remarks>
+        /// <response code="201">Returns the newly created user</response>
+        /// <response code="400">If the user data is invalid</response>
+        /// <response code="404">If the users container is not found</response>
         [HttpPost]
-        [ProducesResponseType(typeof(User), 201)]
+        [ProducesResponseType(typeof(UserDto), 201)]
         [ProducesResponseType(400)]
-        public IActionResult Create([FromBody] User user)
+        [ProducesResponseType(404)]
+        public async Task<IActionResult> Create([FromBody] UserDto user)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            user.Id = Guid.NewGuid();
+            user.Id = Guid.NewGuid().ToString();
             user.RegisteredAt = DateTime.UtcNow;
-            // TODO: Save to DB
 
-            return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+            try
+            {
+                var container = _cosmosDbService.GetContainer("users");
+
+                if (container == null)
+                    return NotFound();
+
+                await container.CreateItemAsync(user, new PartitionKey(user.Id));
+                return CreatedAtAction(nameof(GetById), new { id = user.Id }, user);
+            }
+            catch (CosmosException ex)
+            {
+                _logger.LogError(ex, "Error creating user in Cosmos DB");
+                return StatusCode((int)ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error creating user");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        /// <summary>
-        /// Updates a user profile.
-        /// </summary>
-        /// <param name="id">User's unique identifier.</param>
-        /// <param name="user">Updated user details.</param>
-        /// <returns>No content.</returns>
+    /// <summary>
+    /// Updates an existing user's profile.
+    /// </summary>
+    /// <param name="id">The user's unique identifier.</param>
+    /// <param name="user">The updated user details.</param>
+    /// <remarks>
+    /// Updates the user profile if the user exists.
+    /// </remarks>
+    /// <response code="204">User updated successfully</response>
+    /// <response code="400">If the user data is invalid</response>
+    /// <response code="404">If the user is not found or container is missing</response>
         [HttpPut("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        public IActionResult Update(Guid id, [FromBody] User user)
+        public async Task<IActionResult> Update(string id, [FromBody] UserDto user)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -80,24 +135,50 @@ namespace SocialMedia.Api.Controllers
             // TODO: DB lookup/update
             // If user not found: return NotFound();
 
+            var container = _cosmosDbService.GetContainer("users");
+
+            if (container == null)
+                return NotFound();
+
+            var existingUser = container.GetItemLinqQueryable<UserDto>().FirstOrDefault(u => u.Id == id);
+
+            if (existingUser == null)
+                return NotFound();
+
+            user.Id = id; // Ensure the ID remains unchanged
+            await container.UpsertItemAsync(user, new PartitionKey(user.Id.ToString()));
+            
             // Update user logic
             return NoContent();
         }
 
-        /// <summary>
-        /// Deletes a user.
-        /// </summary>
-        /// <param name="id">User's unique identifier.</param>
-        /// <returns>No content.</returns>
+    /// <summary>
+    /// Deletes a user from the system.
+    /// </summary>
+    /// <param name="id">The user's unique identifier.</param>
+    /// <remarks>
+    /// Removes the user if found.
+    /// </remarks>
+    /// <response code="204">User deleted successfully</response>
+    /// <response code="404">If the user is not found or container is missing</response>
         [HttpDelete("{id}")]
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
-        public IActionResult Delete(Guid id)
+        public async Task<IActionResult> Delete(string id)
         {
             // TODO: DB lookup/delete
             // If user not found: return NotFound();
+            var container = _cosmosDbService.GetContainer("users");
+
+            if (container == null)
+                return NotFound();
+
+            var existingUser = container.GetItemLinqQueryable<UserDto>().FirstOrDefault(u => u.Id == id);
+            if (existingUser == null)
+                return NotFound();
 
             // Delete user logic
+            await container.DeleteItemAsync<UserDto>(id.ToString(), new PartitionKey(id.ToString()));
             return NoContent();
         }
     }
