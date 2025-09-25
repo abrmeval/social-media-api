@@ -424,8 +424,6 @@ FodyWeavers.xsd
 *.cab
 *.msi
 *.msix
-*.msm
-*.msp
 
 # Secrets
 /docs/secrets/
