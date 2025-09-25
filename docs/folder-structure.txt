@@ -1,0 +1,8 @@
+/social-media-api/
+├── dotnet-rest-api/        # ASP.NET Core REST API (.NET 8+)
+├── node-graphql-api/       # Node.js/Express GraphQL API
+├── python-image-service/   # FastAPI microservice for image processing
+├── infra/                  # Infrastructure-as-Code, Azure scripts, Terraform/Bicep
+├── docs/                   # Architecture diagrams and documentation
+├── .github/                # GitHub Actions workflows (CI/CD)
+└── README.md               # Project overview and setup instructions
