@@ -426,4 +426,5 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+# Secret files
 docs/secrets/secrets.json
