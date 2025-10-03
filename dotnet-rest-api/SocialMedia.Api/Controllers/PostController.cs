@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -5,6 +6,7 @@ namespace SocialMedia.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // Require authentication for all endpoints in this controller
     public class PostController : ControllerBase
     {
         [HttpGet]
