@@ -91,9 +91,9 @@ namespace SocialMedia.Api.Services
                 { "name", username },
                 { "iat", new DateTimeOffset(now).ToUnixTimeSeconds() },
                 { "nbf", new DateTimeOffset(now).ToUnixTimeSeconds() },  // Not valid before
-                {  "exp", new DateTimeOffset(expiration).ToUnixTimeSeconds() },  // Expiration
-                { "iss", _jwtSettings.Issuer },
-                { "aud", _jwtSettings.Audience }
+                { "exp", new DateTimeOffset(expiration).ToUnixTimeSeconds() },  // Expiration
+                { "iss", _jwtSettings.Issuer! },
+                { "aud", _jwtSettings.Audience! }
     };
 
             // Add role claims to the payload
@@ -157,7 +157,7 @@ namespace SocialMedia.Api.Services
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.UTF8.GetBytes(_jwtSettings.SigningKeyName);
+                var key = Encoding.UTF8.GetBytes(_jwtSettings.SigningKeyName!);
 
                 var principal = tokenHandler.ValidateToken(token,
                     new TokenValidationParameters

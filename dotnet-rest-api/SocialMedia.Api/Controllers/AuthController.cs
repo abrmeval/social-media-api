@@ -86,19 +86,23 @@ namespace SocialMedia.Api.Controllers
 
                 var claims = new[]
                 {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.NameIdentifier, user.Id!.ToString()),
+                new Claim(ClaimTypes.Name, user.Username!),
                 // Add more claims as needed
             };
 
                 // Generate the JWT token using our service
                 // This token contains all the claims we need and is cryptographically
                 // signed with the key from Key Vault
-                var token = await _tokenService.GenerateTokenAsync(user.Id.ToString(), user.Username, new[] { "User" });
+                var token = await _tokenService.GenerateTokenAsync(user.Id.ToString(), user.Username!, new[] { "User" });
 
                 _logger.LogInformation("User {Username} logged in successfully", user.Username);
 
                 _logger.LogInformation("User {Username} logged in successfully", user.Username);
+
+                // Update last login time
+                user.LastLoginAt = DateTime.UtcNow;
+                await _cosmosDbService.GetContainer("users").UpsertItemAsync(user, new PartitionKey(user.Id!.ToString()));
 
                 // Return the token to the client
                 // The client should store this securely (never in localStorage if

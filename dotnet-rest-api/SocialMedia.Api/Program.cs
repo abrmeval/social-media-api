@@ -68,7 +68,7 @@ else
 
 // Load configuration
 var keyVaultUrl = builder.Configuration["Jwt:KeyVaultUrl"];
-builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUrl), credential);
+builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUrl!), credential);
 
 // Bind JWT settings
 var jwtSettings = new JwtSettings();
@@ -77,7 +77,7 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"))
 
 // Create a KeyClient to retrieve the public key from Key Vault
 // This happens once during startup, not on every request
-var keyClient = new KeyClient(new Uri(jwtSettings.KeyVaultUrl), credential);
+var keyClient = new KeyClient(new Uri(jwtSettings.KeyVaultUrl!), credential);
 
 // Retrieve the RSA key from Key Vault
 // This gives us access to both the key metadata and the public key material
