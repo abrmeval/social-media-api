@@ -29,6 +29,8 @@ namespace SocialMedia.Api.Controllers
         /// <summary>
         /// Retrieves all users in the system.
         /// </summary>
+        /// <param name="pageSize">Number of users to return per page (default is 20).</param>
+        /// <param name="continuationToken">Token for fetching the next page of results.</
         /// <remarks>
         /// Returns a list of all registered users wrapped in an ApiResponse.
         /// </remarks>
@@ -295,7 +297,7 @@ namespace SocialMedia.Api.Controllers
         /// <response code="200">User deactivated successfully</response>
         /// <response code="404">If the user is not found or container is missing</response>
         /// <response code="500">If there is an internal server error</response>
-        [HttpPut("{id}/deactivate")]
+        [HttpPatch("{id}/deactivate")]
         [ProducesResponseType(typeof(ApiResponse<string>), 200)]
         [ProducesResponseType(typeof(ApiResponse<string>), 404)]
         [ProducesResponseType(typeof(ApiResponse<string>), 500)]
