@@ -167,10 +167,12 @@ namespace SocialMedia.Api.Controllers
         /// </remarks>
         /// <response code="200">Post updated successfully</response>
         /// <response code="404">If the post is not found or container is missing</response>
+        /// <response code="403">If the user is not the author of the post</response>
         /// <response code="500">If there is an internal server error</response>
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(ApiResponse<PostDto>), 200)]
         [ProducesResponseType(typeof(ApiResponse<string>), 404)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 403)]
         [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> UpdatePost(string id, [FromBody] PostDto post)
         {
@@ -179,6 +181,9 @@ namespace SocialMedia.Api.Controllers
                 var container = _cosmosDbService.GetContainer("posts");
 
                 PostDto existingPost = await container.ReadItemAsync<PostDto>(id, new PartitionKey(id));
+
+                if(existingPost.AuthorId != User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value)
+                    return StatusCode(403, new ApiResponse<string>(false, "You are not the author of this post", null));
 
                 // Update the existing post with the new values
                 existingPost.Content = post.Content;
