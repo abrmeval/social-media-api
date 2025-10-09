@@ -30,6 +30,12 @@ param appServicePlanSku string = 'F1' // F1 is the Free tier
 @description('Name for the Web App.')
 param webAppName string = 'socialmedia-webapp'
 
+@description('SKU for Key Vault.')
+param keyVaultSku string = 'standard'
+
+@description('Name for the Key Vault.')
+param keyVaultName string = 'socialmedia-keyvault'
+
 resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
   name: '${cosmosDbAccountName}-${randomId}'
   location: location
@@ -177,8 +183,24 @@ resource webApp 'Microsoft.Web/sites@2022-03-01' = {
   }
 }
 
-// Add your App Services for .NET, Node.js, and Python as needed.
 
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
+  name: '${keyVaultName}'
+  location: location
+  properties: {
+    tenantId: subscription().tenantId
+    sku: {
+      family: 'A'
+      name: toUpper(keyVaultSku)
+    }
+    accessPolicies: [] // No access policies by default; configure as needed
+    enableSoftDelete: true
+    enablePurgeProtection: true
+    publicNetworkAccess: 'Enabled'
+  }
+}
+
+// Outputs
 output cosmosDbAccountName string = cosmosDbAccount.name
 output cosmosDbConnectionString string = 'AccountEndpoint=https://${cosmosDbAccount.name}.documents.azure.com:443/;AccountKey=${cosmosDbAccount.listKeys().primaryMasterKey};'
 output cosmosDbEndpoint string = cosmosDbAccount.properties.documentEndpoint
@@ -187,3 +209,5 @@ output storageAccountConnectionString string = 'DefaultEndpointsProtocol=https;A
 output appServicePlanId string = appServicePlan.id
 output webAppName string = webApp.name
 output webAppUrl string = 'https://${webApp.properties.defaultHostName}'
+output keyVaultName string = keyVault.name
+output keyVaultUri string = keyVault.properties.vaultUri
