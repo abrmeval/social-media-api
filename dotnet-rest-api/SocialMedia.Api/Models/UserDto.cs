@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using SocialMedia.Api.Common;
 using Swashbuckle.AspNetCore.Annotations;
 namespace SocialMedia.Api.Models
 {
@@ -53,7 +54,11 @@ namespace SocialMedia.Api.Models
         /// <summary>Indicates if the user account is active.</summary>
         [SwaggerIgnore]
         public bool IsActive { get; set; } = true;
-
+        
+        /// <summary>User's role (e.g., Admin, User).</summary>
+        [SwaggerIgnore]
+        public string Role { get; set; } = AppConstants.DefaultRole;
+        
         /// <summary>URL to user's profile image.</summary>
         [JsonProperty("profileImageUrl")]
         [MaxLength(2048, ErrorMessage = "Profile image URL cannot exceed 2048 characters.")]

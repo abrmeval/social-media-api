@@ -8,6 +8,7 @@ namespace SocialMedia.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class CommentsController : ControllerBase
     {
         private readonly ILogger<CommentsController> _logger;
@@ -128,6 +129,7 @@ namespace SocialMedia.Api.Controllers
             try
             {
                 comment.Id = Guid.NewGuid().ToString();
+                comment.AuthorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
                 comment.CreatedAt = DateTime.UtcNow;
 
                 var container = _cosmosDbService.GetContainer("comments");
@@ -158,7 +160,6 @@ namespace SocialMedia.Api.Controllers
         /// <response code="404">If the comment is not found</response>
         /// <response code="403">If the user is not the author</response>
         /// <response code="500">If there is an internal server error</response>
-        [Authorize]
         [HttpPut("{id}")]
         [ProducesResponseType(typeof(ApiResponse<CommentDto>), 200)]
         [ProducesResponseType(typeof(ApiResponse<string>), 400)]

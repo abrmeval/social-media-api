@@ -1,4 +1,3 @@
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using SocialMedia.Api.Interfaces;
@@ -8,6 +7,7 @@ using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using SocialMedia.Api.Models;
 using Azure.Core;
+using Azure.Storage.Blobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,14 +66,14 @@ else
     Console.WriteLine("Using DefaultAzureCredential (Managed Identity) for production");
 }
 
-// Load configuration
-var keyVaultUrl = builder.Configuration["Jwt:KeyVaultUrl"];
-builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUrl!), credential);
-
 // Bind JWT settings
 var jwtSettings = new JwtSettings();
 builder.Configuration.GetSection("Jwt").Bind(jwtSettings);
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+
+// Add Azure Key Vault as a configuration source
+// This loads all secrets from Key Vault and adds them to IConfiguration
+builder.Configuration.AddAzureKeyVault(new Uri(jwtSettings.KeyVaultUrl!), credential);
 
 // Create a KeyClient to retrieve the public key from Key Vault
 // This happens once during startup, not on every request
@@ -137,15 +137,21 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+
+
 // Register the KeyClient as a singleton for use in the TokenService
 // This client will be used to sign tokens using the private key in Key Vault
 builder.Services.AddSingleton(keyClient);
 builder.Services.AddSingleton(new CryptographyClient(keyVaultKey.Value.Id, credential));
 
+// Register BlobServiceClient for Azure Blob Storage
+builder.Services.AddSingleton(new BlobServiceClient(new Uri(builder.Configuration["BlobStorage:AccountUrl"]!), credential));
+
 // Register CosmosDbService
 builder.Services.AddScoped<ICosmosDbService, CosmosDbService>();
 // Register TokenService
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
 
 var app = builder.Build();
 

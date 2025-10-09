@@ -8,7 +8,7 @@ namespace SocialMedia.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin, User")]
+    [Authorize]
     public class PostController : ControllerBase
     {
         private readonly ILogger<PostController> _logger;
@@ -138,6 +138,7 @@ namespace SocialMedia.Api.Controllers
             try
             {
                 post.Id = Guid.NewGuid().ToString();
+                post.AuthorId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
                 post.CreatedAt = DateTime.UtcNow;
 
                 var container = _cosmosDbService.GetContainer("posts");

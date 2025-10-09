@@ -168,12 +168,10 @@ namespace SocialMedia.Api.Controllers
         /// </remarks>
         /// <response code="201">Returns ApiResponse with the newly created user</response>
         /// <response code="400">If the user data is invalid</response>
-        /// <response code="404">If the users container is not found</response>
         /// <response code="500">If there is an internal server error</response>
         [HttpPost]
         [ProducesResponseType(typeof(ApiResponse<UserResponseDto>), 201)]
         [ProducesResponseType(typeof(ApiResponse<string>), 400)]
-        [ProducesResponseType(typeof(ApiResponse<string>), 404)]
         [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Create([FromBody] UserDto user)
         {

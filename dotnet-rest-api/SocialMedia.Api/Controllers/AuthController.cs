@@ -1,14 +1,11 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos;
 using SocialMedia.Api.Interfaces;
 using SocialMedia.Api.Models;
-using System.Security.Cryptography;
-using Azure.Security.KeyVault.Keys.Cryptography;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authorization;
+using SocialMedia.Api.Common;
 
 namespace SocialMedia.Api.Controllers
 {
@@ -49,6 +46,8 @@ namespace SocialMedia.Api.Controllers
                 Id = Guid.NewGuid().ToString(),
                 Username = request.Username,
                 Email = request.Email,
+                //Ensure every new user gets the default "User" role
+                Role = AppConstants.DefaultRole,
                 RegisteredAt = DateTime.UtcNow
             };
 
@@ -89,12 +88,12 @@ namespace SocialMedia.Api.Controllers
                 new Claim(ClaimTypes.NameIdentifier, user.Id!.ToString()),
                 new Claim(ClaimTypes.Name, user.Username!),
                 // Add more claims as needed
-            };
+                };
 
                 // Generate the JWT token using our service
                 // This token contains all the claims we need and is cryptographically
                 // signed with the key from Key Vault
-                var token = await _tokenService.GenerateTokenAsync(user.Id.ToString(), user.Username!, new[] { "User" });
+                var token = await _tokenService.GenerateTokenAsync(user.Id.ToString(), user.Username!, new[] { user.Role });
 
                 _logger.LogInformation("User {Username} logged in successfully", user.Username);
 
