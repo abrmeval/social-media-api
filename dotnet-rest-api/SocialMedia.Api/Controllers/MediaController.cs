@@ -4,7 +4,6 @@ using Microsoft.Azure.Cosmos;
 using SocialMedia.Api.Interfaces;
 using SocialMedia.Api.Models;
 using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
 using SocialMedia.Api.Common;
 
 namespace SocialMedia.Api.Controllers
@@ -40,17 +39,21 @@ namespace SocialMedia.Api.Controllers
         /// <remarks>Returns the uploaded media file information wrapped in an ApiResponse.</remarks>
         /// <response code="201">Returns ApiResponse with the uploaded media file information</response>
         /// <response code="400">If the file is null or invalid</response>
+        /// <response code="401">If the user is not authenticated</response>
         /// <response code="500">If there was an internal server error</response>
         [HttpPost("upload")]
         [ProducesResponseType(typeof(ApiResponse<MediaDto>), 201)]
         [ProducesResponseType(typeof(ApiResponse<string>), 400)]
+        [ProducesResponseType(typeof(ApiResponse<string>), 401)]
         [ProducesResponseType(typeof(ApiResponse<string>), 500)]
         public async Task<IActionResult> Upload([FromForm] MediaRequestDto media)
         {
             try
             {
                 var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(userId)) return Unauthorized();
+                
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new ApiResponse<string>(false, "Unauthorized", null));
 
                 string? containerName = media.FileCategory switch
                 {
@@ -72,7 +75,7 @@ namespace SocialMedia.Api.Controllers
                     _logger.LogError("Error uploading file to Blob Storage: {Message}", blobFileResponse.Message);
                     return StatusCode(500, new ApiResponse<string>(false, "Error uploading file to Blob Storage", null));
                 }
-                
+
                 // Save media metadata to Cosmos DB
                 var newMedia = new MediaDto
                 {
@@ -169,6 +172,9 @@ namespace SocialMedia.Api.Controllers
 
                 var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new ApiResponse<string>(false, "Unauthorized", null));
+                    
                 if (media.AuthorId != userId)
                     return StatusCode(403, new ApiResponse<string>(false, "You are not the author of this media", null));
 

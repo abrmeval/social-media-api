@@ -131,9 +131,7 @@ namespace SocialMedia.Api.Controllers
         public async Task<IActionResult> CreatePost([FromBody] PostDto post)
         {
             if (post == null)
-            {
                 return BadRequest(new ApiResponse<string>(false, "Post data is null", null));
-            }
 
             try
             {
