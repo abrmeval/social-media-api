@@ -14,8 +14,8 @@ A cloud-native backend for a social media app, featuring:
 
 [Architecture Diagram](docs/architecture-diagram.md)
 
-- **REST API (.NET Core):** Manages users, posts, comments, likes, media uploads.
-- **GraphQL API (Node.js):** Flexible querying for users, posts, timelines.
+- **REST API (.NET Core):** Manages users, posts, comments, likes, media uploads. Admin-protected user management endpoints.
+- **GraphQL API (Node.js/Apollo Server):** Flexible querying for posts, comments, and likes with modular resolvers.
 - **Image Microservice (Python/FastAPI):** Handles image resizing and thumbnail creation, triggered by REST API.
 - **Azure Integration:** Cosmos DB stores app data, Blob Storage manages images and media, all services deployed to Azure App Service.
 
@@ -38,11 +38,11 @@ For details, see [`docs/folder-structure.txt`](docs/folder-structure.txt).
 
 ## 🚀 Features
 
-- **User Management:** Registration, authentication (JWT or Azure AD B2C), profile updates.
+- **User Management:** Registration, authentication (JWT or Azure AD B2C), profile updates. Admin-only user CRUD endpoints.
 - **Posts & Comments:** Full CRUD for posts, comments, likes. Cosmos DB containers for each entity.
 - **Media Upload:** Save images to Blob Storage, trigger Python microservice for processing.
-- **Authentication:** JWT-based (REST API) or Azure AD B2C integration.
-- **API Documentation:** Swagger (REST), GraphQL Playground (GraphQL), FastAPI docs (image service).
+- **Authentication & Authorization:** JWT-based with role-based access control. Admin role for user management.
+- **API Documentation:** Swagger (REST), Apollo GraphQL Playground (GraphQL), FastAPI docs (image service).
 - **Cloud Native:** Cosmos DB for data, Blob Storage for media, App Service for deployment.
 - **CI/CD:** GitHub Actions workflow for build, test, deploy across all services.
 - **Error Handling & Logging:** Consistent logging and error management across services.
@@ -90,12 +90,13 @@ For details, see [`docs/folder-structure.txt`](docs/folder-structure.txt).
       cd dotnet-rest-api
       dotnet run
       ```
-    - **Node.js GraphQL API**
+    - **Node.js GraphQL API (Apollo Server)**
       ```bash
       cd node-graphql-api
       npm install
-      npm start
+      node src/server.js
       ```
+      See [Node.js GraphQL Setup Guide](docs/node-api/node-graphql-setup-guide.md) for detailed configuration.
     - **Python Image Service**
       ```bash
       cd python-image-service
@@ -112,9 +113,10 @@ For details, see [`docs/folder-structure.txt`](docs/folder-structure.txt).
 
 ## 📚 API Documentation
 
-- **REST API:** [Swagger UI](http://localhost:5000/swagger)
-- **GraphQL API:** [GraphQL Playground](http://localhost:4000/graphql)
+- **REST API:** [Swagger UI](http://localhost:5000/swagger) - See [REST API Endpoints](docs/rest-api-endpoints.md)
+- **GraphQL API:** [Apollo GraphQL Playground](http://localhost:4000/) - See [GraphQL Endpoints](docs/node-api/graphql-endpoints.md)
 - **Image Service:** [OpenAPI Docs](http://localhost:8000/docs)
+- **Node.js Setup Guide:** [GraphQL Setup & Migration Guide](docs/node-api/node-graphql-setup-guide.md)
 
 ---
 

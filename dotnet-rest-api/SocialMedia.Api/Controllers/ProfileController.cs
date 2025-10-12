@@ -8,6 +8,7 @@ namespace SocialMedia.Api.Controllers
 {
     [ApiController]
     [Route("api/profile")]
+    [Authorize]
     public class ProfileController : ControllerBase
     {
         private readonly ILogger<ProfileController> _logger;
@@ -27,7 +28,6 @@ namespace SocialMedia.Api.Controllers
         /// <response code="401">Unauthorized if the user is not logged in.</response>  
         /// <response code="404">Not Found if the user does not exist.</response>
         /// <response code="500">Internal Server Error if there is an unexpected error.</response>
-        [Authorize]
         [HttpGet("me")]
         [ProducesResponseType(typeof(UserDto), 200)]
         public async Task<IActionResult> GetMyProfile()
@@ -69,7 +69,6 @@ namespace SocialMedia.Api.Controllers
         /// <response code="401">Unauthorized if the user is not logged in.</response>
         /// <response code="404">Not Found if the user does not exist.</response>
         /// <response code="500">Internal Server Error if there is an unexpected error.</response>
-        [Authorize]
         [HttpPost("{id}/follow")]
         public async Task<IActionResult> FollowUser(string id)
         {
@@ -117,7 +116,6 @@ namespace SocialMedia.Api.Controllers
         /// <response code="401">Unauthorized if the user is not logged in.</response>
         /// <response code="404">Not Found if the user does not exist.</response>
         /// <response code="500">Internal Server Error if there is an unexpected error.</response>
-        [Authorize]
         [HttpPost("{id}/unfollow")]
         public async Task<IActionResult> UnfollowUser(string id)
         {
@@ -163,7 +161,6 @@ namespace SocialMedia.Api.Controllers
         /// <response code="401">Unauthorized if the user is not logged in.</response>
         /// <response code="404">Not Found if the user does not exist.</response>
         /// <response code="500">Internal Server Error if there is an unexpected error.</response>
-        [Authorize]
         [HttpGet("feed")]
         [ProducesResponseType(typeof(IEnumerable<PostDto>), 200)]
         public async Task<IActionResult> GetFeed()

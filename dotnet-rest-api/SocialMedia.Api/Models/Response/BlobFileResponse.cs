@@ -1,35 +1,40 @@
 namespace SocialMedia.Api.Models
 {
-
     /// <summary>
     /// Response model for files retrieved from Blob Storage.
     /// </summary>
     public class BlobFileResponse
     {
         /// <summary>
-        /// Name of the file.
+        /// Name of the file without extension.
         /// </summary>
-        public string? FileName { get; init; }
-
+        public string? BlobNameOnly { get; init; }
+        
         /// <summary>
-        /// Name of the blob in storage.
+        /// Name of the file with extension.
         /// </summary>
         public string? BlobName { get; init; }
 
         /// <summary>
+        /// Full Name of the blob in storage.
+        /// It includes any virtual directory structure.
+        /// </summary>
+        public string? BlobFullName { get; init; }
+
+        /// <summary>
         /// URL of the file in Blob Storage.
         /// </summary>
-        public string? FileUrl { get; init; }
+        public string? Url { get; init; }
 
         /// <summary>
         /// Size of the file in bytes.
         /// </summary>
-        public long FileSize { get; init; }
+        public long Size { get; init; }
 
         /// <summary>
         /// File extension (e.g., .jpg, .png, .pdf).
         /// </summary>
-        public string? FileExtension { get; init; }
+        public string? Extension { get; init; }
 
         /// <summary>
         /// File content as a byte array.

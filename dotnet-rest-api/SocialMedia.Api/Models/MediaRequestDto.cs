@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using SocialMedia.Api.Common;
 
 namespace SocialMedia.Api.Models
 {
@@ -11,7 +12,7 @@ namespace SocialMedia.Api.Models
         public string? PostId { get; set; }
         
         [Required]
-        public string FileCategory { get; set; } = "POSTDOCUMENT";
+        public string FileCategory { get; set; } = AppConstants.PostDocument;
 
         [Required]
         [FileExtensions(Extensions = "jpg,jpeg,png,gif,bmp,mp4,mov,avi,wmv,doc,docx,pdf,txt", ErrorMessage = "Invalid file type.")]

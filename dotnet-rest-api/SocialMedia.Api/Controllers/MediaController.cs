@@ -81,7 +81,7 @@ namespace SocialMedia.Api.Controllers
                 {
                     Id = Guid.NewGuid().ToString(),
                     FileName = media.File.FileName,
-                    BlobUrl = blobFileResponse.FileUrl,
+                    BlobUrl = blobFileResponse.Url,
                     AuthorId = userId,
                     PostId = media.PostId,
                     FileCategory = media.FileCategory,

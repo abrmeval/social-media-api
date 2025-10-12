@@ -1,15 +1,16 @@
-const express = require('express');
-const { graphqlHTTP } = require('express-graphql');
-const schema = require('./schema');
 require('dotenv').config();
+const { ApolloServer } = require('apollo-server');
+const typeDefs = require('./schema');
+const resolvers = require('./resolvers');
 
-const app = express();
-app.use('/graphql', graphqlHTTP({
-  schema,
-  graphiql: true // Enables GraphQL Playground
-}));
-
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`GraphQL API running at http://localhost:${PORT}/graphql`);
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  context: () => ({}) // Add any context/dataSources here if needed
 });
+
+server.listen({ port: process.env.PORT || 4000 }).then(({ url }) => {
+  console.log(`🚀 Apollo Server ready at ${url}`);
+}).catch(err => {
+    console.error('Apollo Server failed to start:', err);
+  });
