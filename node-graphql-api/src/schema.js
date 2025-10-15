@@ -1,4 +1,4 @@
-module.exports = `
+export default `
   # User type
   type User {
     id: ID!
@@ -9,7 +9,10 @@ module.exports = `
     lastLoginAt: String
     isActive: Boolean!
     role: String!
-    following: [ID!]!
+    following: [User!]! # List of users this user follows
+    followers: [User!]! # List of users that follow this user
+    followerCount: Int! # Number of followers
+    followingCount: Int! # Number of users being followed
     posts: [Post!] # Optionally, resolve posts by user
   }
 
@@ -53,6 +56,13 @@ module.exports = `
     isActive: Boolean!
   }
 
+  # Follow/Unfollow response type
+  type FollowResponse {
+    success: Boolean!
+    message: String!
+    following: [ID!]!
+  }
+
   # Media type
   type Media {
     id: ID!
@@ -89,8 +99,8 @@ module.exports = `
     likePost(postId: ID!, authorId: ID!): Like!
     unlikePost(likeId: ID!): Boolean!
 
-    followUser(userId: ID!, followId: ID!): User!
-    unfollowUser(userId: ID!, unfollowId: ID!): User!
+    followUser(currentUserId: ID!, targetUserId: ID!): FollowResponse!
+    unfollowUser(currentUserId: ID!, targetUserId: ID!): FollowResponse!
 
     deleteMedia(mediaId: ID!): Boolean!
   }

@@ -37,4 +37,4 @@ class PostDto {
   }
 }
 
-module.exports = PostDto;
+export default PostDto;

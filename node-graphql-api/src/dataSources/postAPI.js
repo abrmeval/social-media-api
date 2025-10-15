@@ -1,11 +1,18 @@
 // postAPI.js - Data source for Post operations using Azure Cosmos DB
 // Implements CRUD operations for posts, matching GraphQL schema and REST API logic
 
-const { database } = require("../cosmos-client");
-const PostDto = require("../dtos/PostDto");
-const container = database.container("posts");
+import { database } from "../cosmos-client.js";
+import PostDto from "../dtos/PostDto.js";
 
-module.exports = {
+/**
+ * PostAPI - Data source for post operations
+ * Handles CRUD operations for posts in Cosmos DB
+ */
+export class PostAPI {
+  constructor() {
+    this.container = database.container("posts");
+  }
+
   // Fetch all posts
   async getAllPosts() {
     console.log("Fetching all posts from Cosmos DB");
@@ -13,21 +20,21 @@ module.exports = {
       query:
         "SELECT * FROM c WHERE c.isActive = true ORDER BY c.createdAt DESC",
     };
-    const iterator = container.items.query(querySpec);
+    const iterator = this.container.items.query(querySpec);
     const { resources } = await iterator.fetchAll();
     return resources;
-  },
+  }
 
   // Fetch a single post by ID
   async getPostById(id) {
     try {
-      const { resource } = await container.item(id, id).read();
+      const { resource } = await this.container.item(id, id).read();
       return resource;
     } catch (err) {
       if (err.code === 404) return null;
       throw err;
     }
-  },
+  }
 
   // Create a new post
   async createPost(postDto) {
@@ -38,24 +45,24 @@ module.exports = {
         throw new Error("authorId and content are required to create a post.");
       }
 
-        post.id = require("crypto").randomUUID();
-        post.mediaUrl = postDto.mediaUrl;
-        post.createdAt = new Date().toISOString();
-        post.isActive = true;
-        post.likeCount = 0;
-        post.commentCount = 0;
+      post.id = require("crypto").randomUUID();
+      post.mediaUrl = postDto.mediaUrl;
+      post.createdAt = new Date().toISOString();
+      post.isActive = true;
+      post.likeCount = 0;
+      post.commentCount = 0;
 
-      const { resource } = await container.items.create(post);
+      const { resource } = await this.container.items.create(post);
       return resource;
     } catch (err) {
       throw err;
     }
-  },
+  }
 
   // Update an existing post
   async updatePost(id, postDto) {
     try {
-      const { resource: existing } = await container.item(id, id).read();
+      const { resource: existing } = await this.container.item(id, id).read();
 
       if (!existing) return null;
       existing.content = postDto.content ?? existing.content;
@@ -64,32 +71,34 @@ module.exports = {
       existing.commentCount = postDto.commentCount ?? existing.commentCount;
       existing.lastUpdatedAt = new Date().toISOString();
 
-      const { resource } = await container.item(id, id).replace(existing);
+      const { resource } = await this.container.item(id, id).replace(existing);
       return resource;
     } catch (err) {
       if (err.code === 404) return null;
       throw err;
     }
-  },
+  }
 
   // Delete a post
   async deletePost(id) {
     try {
-      await container.item(id, id).delete();
+      await this.container.item(id, id).delete();
       return true;
     } catch (err) {
       if (err.code === 404) return false;
       throw err;
     }
-  },
+  }
 
   // Deactivate a post (soft delete)
   async deactivatePost(id) {
-    const { resource: existing } = await container.item(id, id).read();
+    const { resource: existing } = await this.container.item(id, id).read();
     if (!existing) return false;
     existing.isActive = false;
     existing.lastUpdatedAt = new Date().toISOString();
-    await container.item(id, id).replace(existing);
+    await this.container.item(id, id).replace(existing);
     return true;
-  },
-};
+  }
+}
+
+export const postAPI = new PostAPI();
