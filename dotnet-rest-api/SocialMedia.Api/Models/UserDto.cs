@@ -64,5 +64,11 @@ namespace SocialMedia.Api.Models
         [MaxLength(2048, ErrorMessage = "Profile image URL cannot exceed 2048 characters.")]
         [RegularExpression(@"^(http|https)://", ErrorMessage = "Profile image URL must start with http:// or https://")]
         public string? ProfileImageUrl { get; set; }
+
+        /// <summary>
+        /// List of user IDs this user follows.
+        /// </summary>
+        [JsonProperty("following")]
+        public List<string>? Following { get; set; }
     }
 }

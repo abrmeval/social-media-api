@@ -1,0 +1,94 @@
+// commentAPI.js - Data source for Comment operations using Azure Cosmos DB
+// Implements CRUD operations for comments, matching GraphQL schema and REST API logic
+
+import { database } from "../cosmos-client.js";
+import CommentDto from "../dtos/CommentDto.js";
+const container = database.container("comments");
+
+// Helper to convert raw DB data to CommentDto
+function toCommentDto(data) {
+  return new CommentDto({
+    id: data.id ?? null,
+    postId: data.postId ?? null,
+    authorId: data.authorId ?? null,
+    content: data.content ?? null,
+    createdAt: data.createdAt,
+    lastUpdatedAt: data.lastUpdatedAt ?? null,
+    isActive: data.isActive ?? true,
+  });
+}
+
+// Fetch all comments for a post
+export async function getCommentsByPost(postId) {
+  const querySpec = {
+    query:
+      "SELECT * FROM c WHERE c.postId = @postId AND c.isActive = true ORDER BY c.createdAt ASC",
+    parameters: [{ name: "@postId", value: postId }],
+  };
+  const iterator = container.items.query(querySpec);
+  const { resources } = await iterator.fetchAll();
+  return resources.map(toCommentDto);
+}
+// Fetch a single comment by ID
+export async function getCommentById(id) {
+  try {
+    const { resource } = await container.item(id, id).read();
+    return resource ? toCommentDto(resource) : null;
+  } catch (err) {
+    if (err.code === 404) return null;
+    throw err;
+  }
+}
+// Create a new comment
+export async function createComment({ postId, authorId, content }) {
+  const comment = new CommentDto({
+    id: require("crypto").randomUUID(),
+    postId,
+    authorId,
+    content,
+    createdAt: new Date().toISOString(),
+    isActive: true,
+  });
+  const { resource } = await container.items.create(comment);
+  return toCommentDto(resource);
+}
+
+// Update an existing comment
+export async function updateComment(id, { content }) {
+  try {
+    const { resource: existing } = await container.item(id, id).read();
+
+    if (!existing) return null;
+
+    existing.content = content ?? existing.content;
+    existing.lastUpdatedAt = new Date().toISOString();
+    const { resource } = await container.item(id, id).replace(existing);
+    return toCommentDto(resource);
+  } catch (err) {
+    if (err.code === 404) return null;
+    throw err;
+  }
+}
+
+// Delete a comment (hard delete)
+export async function deleteComment(id) {
+  try {
+    await container.item(id, id).delete();
+    return true;
+  } catch (err) {
+    if (err.code === 404) return false;
+    throw err;
+  }
+}
+
+// Deactivate a comment (soft delete)
+export async function deactivateComment(id) {
+  const { resource: existing } = await container.item(id, id).read();
+
+  if (!existing) return false;
+
+  existing.isActive = false;
+  existing.lastUpdatedAt = new Date().toISOString();
+  await container.item(id, id).replace(existing);
+  return true;
+}

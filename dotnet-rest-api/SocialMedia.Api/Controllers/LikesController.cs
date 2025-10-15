@@ -76,6 +76,10 @@ namespace SocialMedia.Api.Controllers
             try
             {
                 var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new ApiResponse<string>(false, "Unauthorized", null));
+
                 var container = _cosmosDbService.GetContainer("likes");
 
                 // Prevent duplicate likes by same user for same post
@@ -137,6 +141,10 @@ namespace SocialMedia.Api.Controllers
             try
             {
                 var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new ApiResponse<string>(false, "Unauthorized", null));
+                    
                 var container = _cosmosDbService.GetContainer("likes");
 
                 var query = container.GetItemQueryIterator<LikeDto>(
@@ -195,6 +203,10 @@ namespace SocialMedia.Api.Controllers
             try
             {
                 var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new ApiResponse<string>(false, "Unauthorized", null));
+                    
                 var container = _cosmosDbService.GetContainer("likes");
 
                 var query = container.GetItemQueryIterator<LikeDto>(

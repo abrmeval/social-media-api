@@ -35,9 +35,10 @@ namespace SocialMedia.Api.Services
 
                 return new BlobFileResponse
                 {
-                    FileName = Path.GetFileName(file.FileName),
-                    BlobName = blob.Name,
-                    FileUrl = blob.Uri.ToString(),
+                    BlobNameOnly = Path.GetFileNameWithoutExtension(file.FileName),
+                    BlobName = Path.GetFileName(file.FileName),
+                    BlobFullName = blob.Name,
+                    Url = blob.Uri.ToString(),
                     Success = true
                 };
             }
@@ -71,13 +72,14 @@ namespace SocialMedia.Api.Services
 
                 return new BlobFileResponse
                 {
-                    FileName = Path.GetFileName(blobName),
-                    BlobName = blobName,
-                    FileUrl = blob.Uri.ToString(),
-                    FileSize = ms.Length,
+                    BlobNameOnly = Path.GetFileNameWithoutExtension(blobName),
+                    BlobName = Path.GetFileName(blobName),
+                    BlobFullName = blobName,
+                    Url = blob.Uri.ToString(),
+                    Size = ms.Length,
                     Content = ms.ToArray(),
                     Success = true,
-                    FileExtension = Path.GetExtension(blobName),
+                    Extension = Path.GetExtension(blobName),
                     ContentType = downloadInfo.Value.ContentType,
                 };
             }
