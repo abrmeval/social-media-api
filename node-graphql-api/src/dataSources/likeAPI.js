@@ -4,8 +4,6 @@
 import { database } from "../cosmos-client.js";
 import LikeDto from "../dtos/LikeDto.js";
 
-const container = database.container("likes");
-
 /**
  * Converts raw Cosmos DB data to LikeDto
  * @param {Object} data - Raw data from Cosmos DB
@@ -21,7 +19,10 @@ function toLikeDto(data) {
   });
 }
 
-export default {
+class LikeAPI {
+  constructor() {
+    this.container = database.container("likes");
+  }
   /**
    * Fetch all likes for a specific post
    * @param {string} postId - The post ID
@@ -33,14 +34,14 @@ export default {
         query: "SELECT * FROM c WHERE c.postId = @postId AND c.isActive = true ORDER BY c.createdAt DESC",
         parameters: [{ name: "@postId", value: postId }]
       };
-      const iterator = container.items.query(querySpec);
+      const iterator = this.container.items.query(querySpec);
       const { resources } = await iterator.fetchAll();
       return resources.map(toLikeDto);
     } catch (err) {
       console.error(`Error fetching likes for post ${postId}:`, err);
       throw err;
     }
-  },
+  }
 
   /**
    * Fetch a single like by ID
@@ -49,14 +50,14 @@ export default {
    */
   async getLikeById(id) {
     try {
-      const { resource } = await container.item(id, id).read();
+      const { resource } = await this.container.item(id, id).read();
       return resource ? toLikeDto(resource) : null;
     } catch (err) {
       if (err.code === 404) return null;
       console.error(`Error fetching like ${id}:`, err);
       throw err;
     }
-  },
+  }
 
   /**
    * Check if a user already liked a post
@@ -73,14 +74,14 @@ export default {
           { name: "@authorId", value: authorId }
         ]
       };
-      const iterator = container.items.query(querySpec);
+      const iterator = this.container.items.query(querySpec);
       const { resources } = await iterator.fetchAll();
       return resources.length > 0 ? toLikeDto(resources[0]) : null;
     } catch (err) {
       console.error(`Error checking existing like:`, err);
       throw err;
     }
-  },
+  }
 
   /**
    * Create a new like (like a post)
@@ -106,13 +107,13 @@ export default {
         isActive: true
       });
 
-      const { resource } = await container.items.create(like);
+      const { resource } = await this.container.items.create(like);
       return toLikeDto(resource);
     } catch (err) {
       console.error(`Error liking post ${postId}:`, err);
       throw err;
     }
-  },
+  }
 
   /**
    * Delete a like (unlike a post) - hard delete
@@ -121,14 +122,14 @@ export default {
    */
   async unlikePost(id) {
     try {
-      await container.item(id, id).delete();
+      await this.container.item(id, id).delete();
       return true;
     } catch (err) {
       if (err.code === 404) return false;
       console.error(`Error unliking post (deleting like ${id}):`, err);
       throw err;
     }
-  },
+  }
 
   /**
    * Deactivate a like (soft delete)
@@ -137,19 +138,19 @@ export default {
    */
   async deactivateLike(id) {
     try {
-      const { resource: existing } = await container.item(id, id).read();
+      const { resource: existing } = await this.container.item(id, id).read();
 
       if (!existing) return false;
 
       existing.isActive = false;
-      await container.item(id, id).replace(existing);
+      await this.container.item(id, id).replace(existing);
       return true;
     } catch (err) {
       if (err.code === 404) return false;
       console.error(`Error deactivating like ${id}:`, err);
       throw err;
     }
-  },
+  }
 
   /**
    * Get like count for a post
@@ -162,7 +163,7 @@ export default {
         query: "SELECT VALUE COUNT(1) FROM c WHERE c.postId = @postId AND c.isActive = true",
         parameters: [{ name: "@postId", value: postId }]
       };
-      const iterator = container.items.query(querySpec);
+      const iterator = this.container.items.query(querySpec);
       const { resources } = await iterator.fetchAll();
       return resources[0] || 0;
     } catch (err) {
@@ -170,4 +171,7 @@ export default {
       return 0;
     }
   }
-};
+}
+
+// Export singleton instance
+export default new LikeAPI();

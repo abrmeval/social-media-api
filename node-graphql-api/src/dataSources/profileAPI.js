@@ -33,7 +33,7 @@ function fromCosmosDocument(document) {
  * ProfileAPI - Data source for user profile operations
  * Handles following/unfollowing users in Cosmos DB
  */
-export class ProfileAPI {
+ class ProfileAPI {
   constructor() {
     this.container = database.container("users");
   }
@@ -240,4 +240,4 @@ export class ProfileAPI {
 }
 
 // Export singleton instance
-export const profileAPI = new ProfileAPI();
+export default new ProfileAPI();

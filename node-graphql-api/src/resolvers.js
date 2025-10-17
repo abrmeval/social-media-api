@@ -1,16 +1,10 @@
 // GraphQL resolvers for social-media-api
 // Each resolver connects a schema field to your data source (DB, REST API, etc.)
-import PostDto from "./dtos/PostDto.js";
 import { postAPI } from "./dataSources/postAPI.js";
-import {
-  getCommentsByPost,
-  getCommentById,
-  createComment as _createComment,
-  updateComment as _updateComment,
-  deleteComment as _deleteComment,
-} from "./dataSources/commentAPI.js";
+import commentAPI from "./dataSources/commentAPI.js";
 import likeAPI from "./dataSources/likeAPI.js";
-import { profileAPI } from "./dataSources/profileAPI.js";
+import profileAPI from "./dataSources/profileAPI.js";
+import mediaAPI from "./dataSources/mediaAPI.js";
 
 export const Query = {
   // Returns all posts
@@ -35,11 +29,11 @@ export const Query = {
   },
   // Returns all comments for a post
   comments: async (_, { postId }) => {
-    return getCommentsByPost(postId);
+    return commentAPI.getCommentsByPost(postId);
   },
   // Returns a single comment by ID
   comment: async (_, { id }) => {
-    return getCommentById(id);
+    return commentAPI.getCommentById(id);
   },
   // Returns all likes for a post
   likes: async (_, { postId }) => {
@@ -51,20 +45,28 @@ export const Query = {
     }
   },
   // Returns a media file by ID
-  media: async (_, { mediaId }, { dataSources }) => {
-    return dataSources.mediaAPI.getMediaById(mediaId);
+  media: async (_, { mediaId }) => {
+    try {
+      return await mediaAPI.getMediaById(mediaId);
+    } catch (err) {
+      console.error("Error fetching media:", err);
+      return null;
+    }
   },
 };
 export const Mutation = {
   // Creates a new post
   createPost: async (_, { authorId, content, mediaUrl }) => {
-    const postDto = new PostDto({ authorId, content, mediaUrl });
-    return postAPI.createPost(postDto);
+    return postAPI.createPost({ authorId, content, mediaUrl });
   },
   // Updates an existing post
   updatePost: async (_, { id, content, mediaUrl, likeCount, commentCount }) => {
-    const postDto = new PostDto({ content, mediaUrl, likeCount, commentCount });
-    return postAPI.updatePost(id, postDto);
+    return postAPI.updatePost(id, {
+      content,
+      mediaUrl,
+      likeCount,
+      commentCount,
+    });
   },
   // Deletes a post
   deletePost: async (_, { id }) => {
@@ -72,15 +74,15 @@ export const Mutation = {
   },
   // Creates a new comment
   createComment: async (_, { postId, authorId, content }) => {
-    return _createComment({ postId, authorId, content });
+    return commentAPI.createComment({ postId, authorId, content });
   },
   // Updates a comment
   updateComment: async (_, { id, content }) => {
-    return _updateComment(id, { content });
+    return commentAPI.updateComment(id, { content });
   },
   // Deletes a comment
   deleteComment: async (_, { id }) => {
-    return _deleteComment(id);
+    return commentAPI.deleteComment(id);
   },
   // Likes a post
   likePost: async (_, { postId, authorId }) => {
@@ -118,9 +120,14 @@ export const Mutation = {
       throw new Error(err.message || "Failed to unfollow user");
     }
   },
-  // Deletes a media file
-  deleteMedia: async (_, { mediaId }, { dataSources }) => {
-    return dataSources.mediaAPI.deleteMedia(mediaId);
+  // Deletes a media file metadata
+  deleteMedia: async (_, { mediaId }) => {
+    try {
+      return await mediaAPI.deleteMedia(mediaId);
+    } catch (err) {
+      console.error("Error deleting media:", err);
+      throw new Error(err.message || "Failed to delete media");
+    }
   },
 };
 export const Post = {
@@ -131,7 +138,7 @@ export const Post = {
   // Resolves comments for a post
   comments: async (post) => {
     try {
-      return await getCommentsByPost(post.id);
+      return await commentAPI.getCommentsByPost(post.id);
     } catch (err) {
       console.error("Error fetching comments for post:", err);
       return [];
@@ -149,8 +156,9 @@ export const Post = {
 };
 export const Comment = {
   // Resolves the author field for a comment
-  author: async (comment, _, { dataSources }) => {
-    return dataSources.userAPI.getUserById(comment.authorId);
+  author: async (comment, _, {}) => {
+    return profileAPI.getUserById(comment.authorId);
+    //return dataSources.userAPIgetUserById(comment.authorId);
   },
   // Resolves the post field for a comment
   post: async (comment, _, { dataSources }) => {
@@ -159,8 +167,8 @@ export const Comment = {
 };
 export const Like = {
   // Resolves the user field for a like
-  user: async (like, _, { dataSources }) => {
-    return dataSources.userAPI.getUserById(like.authorId);
+  user: async (like, _, {}) => {
+    return profileAPI.getUserById(like.authorId);
   },
   // Resolves the post field for a like
   post: async (like) => {
@@ -212,7 +220,12 @@ export const User = {
 };
 export const Media = {
   // Resolves the uploadedBy field for a media file
-  uploadedBy: async (media, _, { dataSources }) => {
-    return dataSources.userAPI.getUserById(media.authorId);
+  uploadedBy: async (media) => {
+    try {
+      return await profileAPI.getUserById(media.authorId);
+    } catch (err) {
+      console.error("Error fetching media uploader:", err);
+      return null;
+    }
   },
 };

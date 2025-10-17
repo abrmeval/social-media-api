@@ -8,7 +8,7 @@ import PostDto from "../dtos/PostDto.js";
  * PostAPI - Data source for post operations
  * Handles CRUD operations for posts in Cosmos DB
  */
-export class PostAPI {
+class PostAPI {
   constructor() {
     this.container = database.container("posts");
   }
@@ -101,4 +101,4 @@ export class PostAPI {
   }
 }
 
-export const postAPI = new PostAPI();
+export default new PostAPI();
