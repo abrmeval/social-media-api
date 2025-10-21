@@ -1,0 +1,22 @@
+# FastAPI and server dependencies
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-multipart==0.0.20
+
+# Azure SDK
+azure-storage-blob==12.25.1
+azure-identity==1.20.0
+
+# Image processing
+Pillow==11.0.0
+
+# Data validation
+pydantic==2.10.3
+pydantic-settings==2.6.1
+
+# Environment and utilities
+python-dotenv==1.0.1
+httpx==0.28.1
+
+# Logging and monitoring
+python-json-logger==3.2.1
