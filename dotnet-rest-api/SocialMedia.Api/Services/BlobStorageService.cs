@@ -36,7 +36,7 @@ namespace SocialMedia.Api.Services
                 return new BlobFileResponse
                 {
                     BlobNameOnly = Path.GetFileNameWithoutExtension(file.FileName),
-                    BlobName = Path.GetFileName(file.FileName),
+                    BlobName = Path.GetFileName(blob.Name),
                     BlobFullName = blob.Name,
                     Url = blob.Uri.ToString(),
                     Success = true
